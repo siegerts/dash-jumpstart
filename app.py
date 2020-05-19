@@ -6,19 +6,21 @@ from dash.dependencies import Input, Output
 import os
 import numpy as np
 import pandas as pd
+import datetime as dt
 
 external_stylesheets = ["https://codepen.io/chriddyp/pen/bWLwgP.css"]
 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
+parser = lambda date: pd.datetime.strptime(date, "%Y-%m-%d")
+
 # Fetch prices from local CSV using pandas
 prices = pd.read_csv(
     os.path.join(os.path.dirname(__file__), "prices.csv"),
-    index_col=0,
+    # index_col=0,
     parse_dates=True,
+    date_parser=parser,
 )
-
-prices = pd.read_csv(os.path.join("prices.csv"), index_col=0, parse_dates=True,)
 
 
 app.layout = html.Div(
@@ -52,11 +54,19 @@ app.layout = html.Div(
     Output("stock-price-graph", "figure"), [Input("stock-ticker-select", "value")]
 )
 def update_figure(select_tickers):
-    print(select_tickers)
+    # x == date
+    # y == value
     return {
         "data": [
-            {"x": [1, 2, 3], "y": [4, 1, 2], "type": "bar", "name": "SF"},
-            {"x": [1, 2, 3], "y": [2, 4, 5], "type": "bar", "name": "Montréal",},
+            {
+                "x": [date for date in prices.loc[(prices.ticker == stock)]["date"]],
+                "y": [price for price in prices.loc[(prices.ticker == stock)]["close"]],
+                "type": "scatter",
+                "mode": "lines",
+                "name": f"{stock}",
+                "line": {"shape": "spline", "smoothing": "5"},
+            }
+            for stock in select_tickers
         ],
         "layout": {"title": f"Stock Price ({(' & ').join(select_tickers)})"},
     }
