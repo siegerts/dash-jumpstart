@@ -41,26 +41,38 @@ app.layout = html.Div(
             multi=True,
             value=[prices["ticker"].unique()[0]],
         ),
+        dcc.RadioItems(
+            id="stock-ticker-price",
+            options=[
+                {"label": "Open", "value": "open"},
+                {"label": "High", "value": "high"},
+                {"label": "Low", "value": "low"},
+                {"label": "Close", "value": "close"},
+            ],
+            value="close",
+        ),
         # newdf = df.loc[(df.origin != "JFK")
         # multi filter?
         # for label in labels, type == line, name = ticker
         # x and y data points
         dcc.Graph(id="stock-price-graph",),
+        # dcc.Graph(id="stock-volume-graph",),
     ]
 )
 
 
 @app.callback(
-    Output("stock-price-graph", "figure"), [Input("stock-ticker-select", "value")]
+    Output("stock-price-graph", "figure"),
+    [Input("stock-ticker-select", "value"), Input("stock-ticker-price", "value")],
 )
-def update_figure(select_tickers):
+def update__price_figure(select_tickers, price):
     # x == date
     # y == value
     return {
         "data": [
             {
                 "x": [date for date in prices.loc[(prices.ticker == stock)]["date"]],
-                "y": [price for price in prices.loc[(prices.ticker == stock)]["close"]],
+                "y": [price for price in prices.loc[(prices.ticker == stock)][price]],
                 "type": "scatter",
                 "mode": "lines",
                 "name": f"{stock}",
