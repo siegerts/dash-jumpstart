@@ -80,7 +80,8 @@ form_card_group = dbc.Card(
                 dcc.Markdown(
                     """
 Choose the lasso or rectangle tool in the graph's menu
-bar and then select points in the graph.
+bar and then select points in the graph. Selecting data in the **price** graph
+will adjust the x-axis date range in the bottom **volume** graph.
 """
                 ),
                 html.Pre(id="selected-data"),
@@ -90,8 +91,24 @@ bar and then select points in the graph.
     body=True,
 )
 
+# sidebar
+SIDEBAR_STYLE = {
+    "position": "fixed",
+    "top": "50px",
+    "left": 0,
+    "bottom": 0,
+    "width": "28rem",
+    "padding": "2rem 1rem",
+}
+
+sidebar = html.Div(form_card_group, style=SIDEBAR_STYLE,)
+
 # price and volume graphs
 graphs = [
+    dbc.Alert(
+        "📊 Hover over the charts to highlight data points and show graph utilities.",
+        color="info",
+    ),
     dcc.Graph(id="stock-price-graph", animate=True),
     dcc.Graph(id="stock-volume-graph", animate=True,),
 ]
@@ -100,9 +117,7 @@ graphs = [
 body_container = dbc.Container(
     [
         html.Div(
-            children=[
-                dbc.Row([dbc.Col(form_card_group, md=4,), dbc.Col(graphs, md=8,),],),
-            ],
+            children=[dbc.Row([dbc.Col(sidebar, md=4,), dbc.Col(graphs, md=8,),],),],
             className="m-4",
         ),
     ],
@@ -150,6 +165,7 @@ def volume_figure_layout(selected_tickers, xaxis_range=None):
     layout = dict(xaxis={}, yaxis={})
     layout["title"] = f"Trading Volume ({(' & ').join(selected_tickers)})"
     layout["yaxis"] = {"autorange": True}
+    layout["yaxis"]["title"] = "Volume"
     layout["xaxis"]["title"] = "Trading Volume by Date"
 
     if xaxis_range:
@@ -187,6 +203,8 @@ def update_price_figure(selected_tickers, price):
         ],
         "layout": {
             "title": f"Stock Price - {price.title()} ({(' & ').join(selected_tickers)})",
+            "xaxis": {"title": "Date"},
+            "yaxis": {"title": "Price"},
         },
     }
 
