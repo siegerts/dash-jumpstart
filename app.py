@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
-import dash
-import dash_core_components as dcc
-import dash_bootstrap_components as dbc
-import dash_html_components as html
-from dash.dependencies import Input, Output
 import os
+from datetime import datetime as dt
+
 import numpy as np
 import pandas as pd
-from datetime import datetime as dt
-import json
+
+import dash
+import dash_bootstrap_components as dbc
+import dash_core_components as dcc
+import dash_html_components as html
+from dash.dependencies import Input, Output
 
 MIN_DATE = pd.Timestamp(2010, 1, 4, 0).date()
 MAX_DATE = pd.Timestamp(2018, 11, 7, 0).date()
@@ -136,6 +137,28 @@ def filter_data_by_date(df, ticker, start_date, end_date):
     return filtered
 
 
+def volume_figure_layout(selected_tickers, xaxis_range=None):
+    """Add ayout specific to x-axis
+
+    Args:
+        selected_tickers: stock tickers for title
+        xaxis_range: `dict` with layout.xaxis.range config
+       
+    Returns:
+        a layout dict
+    """
+    layout = dict(xaxis={}, yaxis={})
+    layout["title"] = f"Trading Volume ({(' & ').join(selected_tickers)})"
+    layout["yaxis"] = {"autorange": True}
+    layout["xaxis"]["title"] = "Trading Volume by Date"
+
+    if xaxis_range:
+        layout["xaxis"]["range"] = xaxis_range
+        layout["xaxis"]["autorange"] = True
+
+    return layout
+
+
 @app.callback(
     Output("stock-price-graph", "figure"),
     [Input("stock-ticker-select", "value"), Input("stock-ticker-price", "value"),],
@@ -150,8 +173,6 @@ def update_price_figure(selected_tickers, price):
         a graph `figure` dict containing the specificed 
         price data points per stock
     """
-    # x == date
-    # y == value
 
     return {
         "data": [
@@ -165,7 +186,7 @@ def update_price_figure(selected_tickers, price):
             for stock in selected_tickers
         ],
         "layout": {
-            "title": f"Stock Price - {price} ({(' & ').join(selected_tickers)})",
+            "title": f"Stock Price - {price.title()} ({(' & ').join(selected_tickers)})",
         },
     }
 
@@ -189,8 +210,6 @@ def update_volume_figure(selected_tickers, relayoutData):
         date range.
     """
 
-    # x == date
-    # y == value
     data = []
     from_date = None
     to_date = None
@@ -214,19 +233,11 @@ def update_volume_figure(selected_tickers, relayoutData):
                     }
                 )
 
-            xaxis = {
-                "title": "Trading Volume by Date",
-                "autorange": True,
-                "range": [from_date, to_date],
-            }
+            xaxis_range = [from_date, to_date]
 
             return {
                 "data": data,
-                "layout": {
-                    "title": f"Trading Volume ({(' & ').join(selected_tickers)})",
-                    "xaxis": xaxis,
-                    "yaxis": {"autorange": True},
-                },
+                "layout": volume_figure_layout(selected_tickers, xaxis_range),
             }
 
         else:
@@ -240,28 +251,15 @@ def update_volume_figure(selected_tickers, relayoutData):
                 for stock in selected_tickers
             ]
 
-            xaxis = {
-                "title": "Trading Volume by Date",
-                "autorange": True,
-                "range": [MIN_DATE, MAX_DATE],
-            }
+            # default dates
+            xaxis_range = [MIN_DATE, MAX_DATE]
 
             return {
                 "data": data,
-                "layout": {
-                    "title": f"Trading Volume ({(' & ').join(selected_tickers)})",
-                    "xaxis": xaxis,
-                    "yaxis": {"autorange": True},
-                },
+                "layout": volume_figure_layout(selected_tickers, xaxis_range),
             }
 
-    return {
-        "data": data,
-        "layout": {
-            "title": f"Trading Volume ({(' & ').join(selected_tickers)})",
-            "yaxis": {"autorange": True},
-        },
-    }
+    return {"data": data, "layout": volume_figure_layout(selected_tickers)}
 
 
 if __name__ == "__main__":
