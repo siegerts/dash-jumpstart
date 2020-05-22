@@ -79,8 +79,7 @@ form_card_group = dbc.Card(
             [
                 dcc.Markdown(
                     """
-Choose the lasso or rectangle tool in the graph's menu
-bar and then select points in the graph. Selecting data in the **price** graph
+Selecting data in the **price** graph
 will adjust the x-axis date range in the bottom **volume** graph.
 """
                 ),
@@ -106,7 +105,7 @@ sidebar = html.Div(form_card_group, style=SIDEBAR_STYLE,)
 # price and volume graphs
 graphs = [
     dbc.Alert(
-        "📊 Hover over the charts to highlight data points and show graph utilities.",
+        "📊 Hover over the charts to highlight data points and show graph utilities. All data is historical.",
         color="info",
     ),
     dcc.Graph(id="stock-price-graph", animate=True),
