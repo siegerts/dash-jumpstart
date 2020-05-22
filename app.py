@@ -27,6 +27,7 @@ prices = pd.read_csv(
 )
 
 prices["date"] = pd.to_datetime(prices["date"], format="%Y-%m-%d")
+tickers = prices["ticker"].unique()
 
 # top nav bar
 nav = dbc.Navbar(
@@ -48,12 +49,9 @@ form_card_group = dbc.Card(
                 dbc.Label("Choose a Stock Symbol"),
                 dcc.Dropdown(
                     id="stock-ticker-select",
-                    options=[
-                        {"label": ticker, "value": ticker,}
-                        for ticker in prices["ticker"].unique()
-                    ],
+                    options=[{"label": ticker, "value": ticker,} for ticker in tickers],
                     multi=True,
-                    value=[prices["ticker"].unique()[0]],
+                    value=[tickers[0]],
                 ),
             ]
         ),
