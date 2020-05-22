@@ -13,7 +13,6 @@ import json
 MIN_DATE = pd.Timestamp(2010, 1, 4, 0).date()
 MAX_DATE = pd.Timestamp(2018, 11, 7, 0).date()
 
-
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
 parser = lambda date: pd.datetime.strptime(date, "%Y-%m-%d")
@@ -25,120 +24,106 @@ prices = pd.read_csv(
     parse_dates=True,
     date_parser=parser,
 )
+
 prices["date"] = pd.to_datetime(prices["date"], format="%Y-%m-%d")
 
-
-app.layout = html.Div(
-    [
-        dbc.Navbar(
-            children=[
-                dbc.Row(
-                    [dbc.Col(dbc.NavbarBrand("Stock Tracker", className="ml-2")),],
-                    align="center",
-                    no_gutters=True,
-                ),
-            ],
-            sticky="top",
+# top nav bar
+nav = dbc.Navbar(
+    children=[
+        dbc.Row(
+            [dbc.Col(dbc.NavbarBrand("Stock Tracker", className="ml-2")),],
+            align="center",
+            no_gutters=True,
         ),
-        dbc.Container(
-            [
-                html.Div(
-                    children=[
-                        dbc.Row(
-                            [
-                                dbc.Col(
-                                    dbc.Card(
-                                        [
-                                            dbc.FormGroup(
-                                                [
-                                                    dbc.Label("Choose a Stock Symbol"),
-                                                    dcc.Dropdown(
-                                                        id="stock-ticker-select",
-                                                        options=[
-                                                            {
-                                                                "label": ticker,
-                                                                "value": ticker,
-                                                            }
-                                                            for ticker in prices[
-                                                                "ticker"
-                                                            ].unique()
-                                                        ],
-                                                        multi=True,
-                                                        value=[
-                                                            prices["ticker"].unique()[0]
-                                                        ],
-                                                    ),
-                                                ]
-                                            ),
-                                            dbc.FormGroup(
-                                                [
-                                                    dbc.Label("Price"),
-                                                    dbc.Col(
-                                                        dbc.RadioItems(
-                                                            id="stock-ticker-price",
-                                                            options=[
-                                                                {
-                                                                    "label": "Open",
-                                                                    "value": "open",
-                                                                },
-                                                                {
-                                                                    "label": "High",
-                                                                    "value": "high",
-                                                                },
-                                                                {
-                                                                    "label": "Low",
-                                                                    "value": "low",
-                                                                },
-                                                                {
-                                                                    "label": "Close",
-                                                                    "value": "close",
-                                                                },
-                                                            ],
-                                                            value="close",
-                                                        ),
-                                                        width=10,
-                                                    ),
-                                                ]
-                                            ),
-                                            html.Div(
-                                                [
-                                                    dcc.Markdown(
-                                                        """
-                                Choose the lasso or rectangle tool in the graph's menu
-                                bar and then select points in the graph.
-                            
-                            """
-                                                    ),
-                                                    html.Pre(id="selected-data"),
-                                                ],
-                                            ),
-                                        ],
-                                        body=True,
-                                    ),
-                                    md=4,
-                                ),
-                                dbc.Col(
-                                    [
-                                        dcc.Graph(id="stock-price-graph", animate=True),
-                                        dcc.Graph(
-                                            id="stock-volume-graph", animate=True,
-                                        ),
-                                    ],
-                                    md=8,
-                                ),
-                            ],
-                        ),
-                    ],
-                    className="m-4",
-                ),
-            ],
-            fluid=True,
-        ),
-    ]
+    ],
+    sticky="top",
 )
+
+# left side grouping of selction options
+form_card_group = dbc.Card(
+    [
+        dbc.FormGroup(
+            [
+                dbc.Label("Choose a Stock Symbol"),
+                dcc.Dropdown(
+                    id="stock-ticker-select",
+                    options=[
+                        {"label": ticker, "value": ticker,}
+                        for ticker in prices["ticker"].unique()
+                    ],
+                    multi=True,
+                    value=[prices["ticker"].unique()[0]],
+                ),
+            ]
+        ),
+        dbc.FormGroup(
+            [
+                dbc.Label("Price"),
+                dbc.Col(
+                    dbc.RadioItems(
+                        id="stock-ticker-price",
+                        options=[
+                            {"label": "Open", "value": "open",},
+                            {"label": "High", "value": "high",},
+                            {"label": "Low", "value": "low",},
+                            {"label": "Close", "value": "close",},
+                        ],
+                        value="close",
+                    ),
+                    width=10,
+                ),
+            ]
+        ),
+        html.Div(
+            [
+                dcc.Markdown(
+                    """
+Choose the lasso or rectangle tool in the graph's menu
+bar and then select points in the graph.
+"""
+                ),
+                html.Pre(id="selected-data"),
+            ],
+        ),
+    ],
+    body=True,
+)
+
+# price and volume graphs
+graphs = [
+    dcc.Graph(id="stock-price-graph", animate=True),
+    dcc.Graph(id="stock-volume-graph", animate=True,),
+]
+
+
+body_container = dbc.Container(
+    [
+        html.Div(
+            children=[
+                dbc.Row([dbc.Col(form_card_group, md=4,), dbc.Col(graphs, md=8,),],),
+            ],
+            className="m-4",
+        ),
+    ],
+    fluid=True,
+)
+
+# main app ui entry
+app.layout = html.Div([nav, body_container])
 
 
 def filter_data_by_date(df, ticker, start_date, end_date):
+    """Apply filer to the input dataframe
+
+    Args:
+        df: dateframe to filter
+        ticker: stock ticker symbol for filter criteria
+        start_date: min date threshold
+        end_date: max date threshold
+    Returns:
+        a filtered dataframe by ticker and date range
+    
+    """
     if start_date is None:
         start_date = MIN_DATE
 
@@ -156,6 +141,15 @@ def filter_data_by_date(df, ticker, start_date, end_date):
     [Input("stock-ticker-select", "value"), Input("stock-ticker-price", "value"),],
 )
 def update_price_figure(selected_tickers, price):
+    """Create a plot of stock prices
+
+    Args:
+        selected_tickers: ticker symbols from the dropdown select
+        price: the radio button price selection
+    Returns:
+        a graph `figure` dict containing the specificed 
+        price data points per stock
+    """
     # x == date
     # y == value
 
@@ -184,6 +178,16 @@ def update_price_figure(selected_tickers, price):
     ],
 )
 def update_volume_figure(selected_tickers, relayoutData):
+    """Create a plot of stock volume
+
+    Args:
+        selected_tickers: ticker symbols from the dropdown select
+        relayoutData: data emitted from a `selection` on the price graph
+    Returns:
+        a graph `figure` dict containing the specificed 
+        volume data points per stock within the relayoutData
+        date range.
+    """
 
     # x == date
     # y == value
