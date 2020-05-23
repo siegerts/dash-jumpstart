@@ -126,7 +126,7 @@ app.layout = html.Div([nav, body_container])
 
 
 def filter_data_by_date(df, ticker, start_date, end_date):
-    """Apply filer to the input dataframe
+    """Apply filter to the input dataframe
 
     Args:
         df: dateframe to filter
@@ -150,7 +150,7 @@ def filter_data_by_date(df, ticker, start_date, end_date):
 
 
 def volume_figure_layout(selected_tickers, xaxis_range=None):
-    """Add ayout specific to x-axis
+    """Add layout specific to x-axis
 
     Args:
         selected_tickers: stock tickers for title
