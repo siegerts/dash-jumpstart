@@ -18,6 +18,9 @@ app = dash.Dash(
     __name__, url_base_pathname="/dash/", external_stylesheets=[dbc.themes.BOOTSTRAP]
 )
 
+app.css.config.serve_locally = True
+app.scripts.config.serve_locally = True
+
 parser = lambda date: pd.datetime.strptime(date, "%Y-%m-%d")
 
 # Fetch prices from local CSV using pandas
