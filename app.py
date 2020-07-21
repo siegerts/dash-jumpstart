@@ -14,7 +14,9 @@ from dash.dependencies import Input, Output
 MIN_DATE = pd.Timestamp(2010, 1, 4, 0).date()
 MAX_DATE = pd.Timestamp(2018, 11, 7, 0).date()
 
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+app = dash.Dash(
+    __name__, url_base_pathname="/dash/", external_stylesheets=[dbc.themes.BOOTSTRAP]
+)
 
 parser = lambda date: pd.datetime.strptime(date, "%Y-%m-%d")
 
